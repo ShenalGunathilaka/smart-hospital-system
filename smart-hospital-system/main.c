@@ -4,7 +4,6 @@
 
 #define MAX_PATIENTS 100
 
-// Data structures for hospital entities
 typedef struct {
     int id;
     char name[30];
@@ -39,7 +38,6 @@ typedef struct {
     int wait_time;
 } Patient;
 
-// Constant lookup tables
 const Specialty SPECIALTIES[4] = {
     {1, "General Practice (OPD)", 1500.00, 15, 30},
     {2, "Paediatrics", 2500.00, 20, 20},
@@ -54,11 +52,11 @@ const Ward WARDS[4] = {
     {4, "ICU (Intensive Care Unit)", 25000.00, 5}
 };
 
-// Global state tracking
-int bedOccupancy[4][20] = {0}; // 2D array: 4 wards, max 20 beds
-int specialtyQueue[4] = {0};   // Track active queue count per specialty
+Patient patients[MAX_PATIENTS];
+int patientCount = 0;
 
 void displayMenu();
+void registerPatient();
 
 int main() {
     int choice;
@@ -70,7 +68,7 @@ int main() {
 
         switch (choice) {
             case 1:
-                printf("\n[Feature Pending] Register New Patient\n");
+                registerPatient();
                 break;
             case 2:
                 printf("\n[Feature Pending] Display Triage Priority List\n");
@@ -98,4 +96,57 @@ void displayMenu() {
     printf("\n3. Generate System Analytics");
     printf("\n4. Exit");
     printf("\n=========================================\n");
+}
+
+void registerPatient() {
+    if (patientCount >= MAX_PATIENTS) {
+        printf("\nError: System registration limit reached.\n");
+        return;
+    }
+
+    Patient p;
+    p.id = patientCount + 101; // Auto-generate ID starting at 101
+
+    printf("\n--- Patient Registration (ID: %d) ---\n", p.id);
+
+    printf("Enter Patient Full Name: ");
+    getchar(); // Clear leftover newline from scanf
+    fgets(p.name, sizeof(p.name), stdin);
+    p.name[strcspn(p.name, "\n")] = 0; // Remove trailing newline
+
+    printf("Enter Age: ");
+    scanf("%d", &p.age);
+
+    printf("\nSelect Urgency Level:\n");
+    printf(" 1. Normal\n 2. Urgent\n 3. Critical\nChoice: ");
+    scanf("%d", &p.urgency);
+
+    printf("\nSelect Medical Specialty:\n");
+    for (int i = 0; i < 4; i++) {
+        printf(" %d. %s (LKR %.2f)\n", SPECIALTIES[i].id, SPECIALTIES[i].name, SPECIALTIES[i].base_fee);
+    }
+    printf("Choice: ");
+    scanf("%d", &p.specialty_id);
+
+    printf("\nIs admission required? (1: Yes, 0: No / Outpatient): ");
+    int isAdmitted;
+    scanf("%d", &isAdmitted);
+
+    if (isAdmitted) {
+        printf("\nSelect Ward:\n");
+        for (int i = 0; i < 4; i++) {
+            printf(" %d. %s (LKR %.2f / day)\n", WARDS[i].id, WARDS[i].name, WARDS[i].daily_rate);
+        }
+        printf("Choice: ");
+        scanf("%d", &p.ward_id);
+
+        printf("Enter anticipated days of stay: ");
+        scanf("%d", &p.days_admitted);
+    } else {
+        p.ward_id = 0;
+        p.days_admitted = 0;
+    }
+
+    patients[patientCount++] = p;
+    printf("\nPatient %s registered successfully!\n", p.name);
 }
