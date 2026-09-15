@@ -64,7 +64,11 @@ int main() {
     do {
         displayMenu();
         printf("Enter Choice: ");
-        scanf("%d", &choice);
+        if (scanf("%d", &choice) != 1) {
+            while (getchar() != '\n'); // Clear buffer
+            printf("\nInvalid input. Please enter a number.\n");
+            continue;
+        }
 
         switch (choice) {
             case 1:
@@ -80,7 +84,7 @@ int main() {
                 printf("\nExiting system...\n");
                 break;
             default:
-                printf("\nInvalid option. Please try again.\n");
+                printf("\nInvalid option. Please choose between 1 and 4.\n");
         }
     } while (choice != 4);
 
@@ -105,48 +109,97 @@ void registerPatient() {
     }
 
     Patient p;
-    p.id = patientCount + 101; // Auto-generate ID starting at 101
+    p.id = patientCount + 101;
 
     printf("\n--- Patient Registration (ID: %d) ---\n", p.id);
 
+    // Name Input
     printf("Enter Patient Full Name: ");
-    getchar(); // Clear leftover newline from scanf
+    getchar(); // Clear newline
     fgets(p.name, sizeof(p.name), stdin);
-    p.name[strcspn(p.name, "\n")] = 0; // Remove trailing newline
+    p.name[strcspn(p.name, "\n")] = 0;
 
-    printf("Enter Age: ");
-    scanf("%d", &p.age);
+    // Age Validation (0 to 120 years)
+    do {
+        printf("Enter Age (0 - 120): ");
+        if (scanf("%d", &p.age) != 1 || p.age < 0 || p.age > 120) {
+            while (getchar() != '\n');
+            printf("Invalid age! Please enter a value between 0 and 120.\n");
+        } else {
+            break;
+        }
+    } while (1);
 
-    printf("\nSelect Urgency Level:\n");
-    printf(" 1. Normal\n 2. Urgent\n 3. Critical\nChoice: ");
-    scanf("%d", &p.urgency);
+    // Urgency Validation (1, 2, or 3)
+    do {
+        printf("\nSelect Urgency Level:\n");
+        printf(" 1. Normal\n 2. Urgent\n 3. Critical\nChoice (1-3): ");
+        if (scanf("%d", &p.urgency) != 1 || p.urgency < 1 || p.urgency > 3) {
+            while (getchar() != '\n');
+            printf("Invalid selection! Please enter 1, 2, or 3.\n");
+        } else {
+            break;
+        }
+    } while (1);
 
-    printf("\nSelect Medical Specialty:\n");
-    for (int i = 0; i < 4; i++) {
-        printf(" %d. %s (LKR %.2f)\n", SPECIALTIES[i].id, SPECIALTIES[i].name, SPECIALTIES[i].base_fee);
-    }
-    printf("Choice: ");
-    scanf("%d", &p.specialty_id);
+    // Specialty Selection Validation (1 to 4)
+    do {
+        printf("\nSelect Medical Specialty:\n");
+        for (int i = 0; i < 4; i++) {
+            printf(" %d. %s (LKR %.2f)\n", SPECIALTIES[i].id, SPECIALTIES[i].name, SPECIALTIES[i].base_fee);
+        }
+        printf("Choice (1-4): ");
+        if (scanf("%d", &p.specialty_id) != 1 || p.specialty_id < 1 || p.specialty_id > 4) {
+            while (getchar() != '\n');
+            printf("Invalid specialty choice! Pick between 1 and 4.\n");
+        } else {
+            break;
+        }
+    } while (1);
 
-    printf("\nIs admission required? (1: Yes, 0: No / Outpatient): ");
+    // Admission Option Validation (0 or 1)
     int isAdmitted;
-    scanf("%d", &isAdmitted);
+    do {
+        printf("\nIs admission required? (1: Yes, 0: No / Outpatient): ");
+        if (scanf("%d", &isAdmitted) != 1 || (isAdmitted != 0 && isAdmitted != 1)) {
+            while (getchar() != '\n');
+            printf("Invalid option! Enter 1 for Yes or 0 for No.\n");
+        } else {
+            break;
+        }
+    } while (1);
 
     if (isAdmitted) {
-        printf("\nSelect Ward:\n");
-        for (int i = 0; i < 4; i++) {
-            printf(" %d. %s (LKR %.2f / day)\n", WARDS[i].id, WARDS[i].name, WARDS[i].daily_rate);
-        }
-        printf("Choice: ");
-        scanf("%d", &p.ward_id);
+        // Ward Selection Validation (1 to 4)
+        do {
+            printf("\nSelect Ward:\n");
+            for (int i = 0; i < 4; i++) {
+                printf(" %d. %s (LKR %.2f / day)\n", WARDS[i].id, WARDS[i].name, WARDS[i].daily_rate);
+            }
+            printf("Choice (1-4): ");
+            if (scanf("%d", &p.ward_id) != 1 || p.ward_id < 1 || p.ward_id > 4) {
+                while (getchar() != '\n');
+                printf("Invalid ward selection! Pick between 1 and 4.\n");
+            } else {
+                break;
+            }
+        } while (1);
 
-        printf("Enter anticipated days of stay: ");
-        scanf("%d", &p.days_admitted);
+        // Days Admitted Validation (> 0)
+        do {
+            printf("Enter anticipated days of stay (1 - 365): ");
+            if (scanf("%d", &p.days_admitted) != 1 || p.days_admitted < 1 || p.days_admitted > 365) {
+                while (getchar() != '\n');
+                printf("Invalid duration! Please enter a number between 1 and 365.\n");
+            } else {
+                break;
+            }
+        } while (1);
     } else {
         p.ward_id = 0;
         p.days_admitted = 0;
     }
 
     patients[patientCount++] = p;
-    printf("\nPatient %s registered successfully!\n", p.name);
+    printf("\nPatient %s registered successfully with validated inputs!\n", p.name);
 }
