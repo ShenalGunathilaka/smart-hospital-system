@@ -57,6 +57,7 @@ int patientCount = 0;
 
 void displayMenu();
 void registerPatient();
+float getSpecialtyBaseFee(int specialty_id);
 
 int main() {
     int choice;
@@ -65,7 +66,7 @@ int main() {
         displayMenu();
         printf("Enter Choice: ");
         if (scanf("%d", &choice) != 1) {
-            while (getchar() != '\n'); // Clear buffer
+            while (getchar() != '\n');
             printf("\nInvalid input. Please enter a number.\n");
             continue;
         }
@@ -102,6 +103,15 @@ void displayMenu() {
     printf("\n=========================================\n");
 }
 
+float getSpecialtyBaseFee(int specialty_id) {
+    for (int i = 0; i < 4; i++) {
+        if (SPECIALTIES[i].id == specialty_id) {
+            return SPECIALTIES[i].base_fee;
+        }
+    }
+    return 0.0f; // Default fallback
+}
+
 void registerPatient() {
     if (patientCount >= MAX_PATIENTS) {
         printf("\nError: System registration limit reached.\n");
@@ -113,13 +123,11 @@ void registerPatient() {
 
     printf("\n--- Patient Registration (ID: %d) ---\n", p.id);
 
-    // Name Input
     printf("Enter Patient Full Name: ");
-    getchar(); // Clear newline
+    getchar();
     fgets(p.name, sizeof(p.name), stdin);
     p.name[strcspn(p.name, "\n")] = 0;
 
-    // Age Validation (0 to 120 years)
     do {
         printf("Enter Age (0 - 120): ");
         if (scanf("%d", &p.age) != 1 || p.age < 0 || p.age > 120) {
@@ -130,7 +138,6 @@ void registerPatient() {
         }
     } while (1);
 
-    // Urgency Validation (1, 2, or 3)
     do {
         printf("\nSelect Urgency Level:\n");
         printf(" 1. Normal\n 2. Urgent\n 3. Critical\nChoice (1-3): ");
@@ -142,7 +149,6 @@ void registerPatient() {
         }
     } while (1);
 
-    // Specialty Selection Validation (1 to 4)
     do {
         printf("\nSelect Medical Specialty:\n");
         for (int i = 0; i < 4; i++) {
@@ -157,7 +163,9 @@ void registerPatient() {
         }
     } while (1);
 
-    // Admission Option Validation (0 or 1)
+    // Look up base fee dynamically
+    p.base_fee = getSpecialtyBaseFee(p.specialty_id);
+
     int isAdmitted;
     do {
         printf("\nIs admission required? (1: Yes, 0: No / Outpatient): ");
@@ -170,7 +178,6 @@ void registerPatient() {
     } while (1);
 
     if (isAdmitted) {
-        // Ward Selection Validation (1 to 4)
         do {
             printf("\nSelect Ward:\n");
             for (int i = 0; i < 4; i++) {
@@ -185,7 +192,6 @@ void registerPatient() {
             }
         } while (1);
 
-        // Days Admitted Validation (> 0)
         do {
             printf("Enter anticipated days of stay (1 - 365): ");
             if (scanf("%d", &p.days_admitted) != 1 || p.days_admitted < 1 || p.days_admitted > 365) {
@@ -201,5 +207,5 @@ void registerPatient() {
     }
 
     patients[patientCount++] = p;
-    printf("\nPatient %s registered successfully with validated inputs!\n", p.name);
+    printf("\nPatient %s registered! Base Consultation Fee calculated: LKR %.2f\n", p.name, p.base_fee);
 }
