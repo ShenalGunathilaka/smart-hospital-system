@@ -58,6 +58,7 @@ int patientCount = 0;
 void displayMenu();
 void registerPatient();
 float getSpecialtyBaseFee(int specialty_id);
+float calculateSurcharge(float base_fee, int urgency);
 
 int main() {
     int choice;
@@ -109,7 +110,16 @@ float getSpecialtyBaseFee(int specialty_id) {
             return SPECIALTIES[i].base_fee;
         }
     }
-    return 0.0f; // Default fallback
+    return 0.0f;
+}
+
+float calculateSurcharge(float base_fee, int urgency) {
+    if (urgency == 2) {
+        return base_fee * 0.15f; // 15% surcharge for Urgent cases
+    } else if (urgency == 3) {
+        return base_fee * 0.35f; // 35% surcharge for Critical cases
+    }
+    return 0.0f; // 0% surcharge for Normal cases
 }
 
 void registerPatient() {
@@ -140,7 +150,7 @@ void registerPatient() {
 
     do {
         printf("\nSelect Urgency Level:\n");
-        printf(" 1. Normal\n 2. Urgent\n 3. Critical\nChoice (1-3): ");
+        printf(" 1. Normal (0%% surcharge)\n 2. Urgent (15%% surcharge)\n 3. Critical (35%% surcharge)\nChoice (1-3): ");
         if (scanf("%d", &p.urgency) != 1 || p.urgency < 1 || p.urgency > 3) {
             while (getchar() != '\n');
             printf("Invalid selection! Please enter 1, 2, or 3.\n");
@@ -163,8 +173,9 @@ void registerPatient() {
         }
     } while (1);
 
-    // Look up base fee dynamically
+    // Dynamic fee and surcharge calculations
     p.base_fee = getSpecialtyBaseFee(p.specialty_id);
+    p.surcharge = calculateSurcharge(p.base_fee, p.urgency);
 
     int isAdmitted;
     do {
@@ -207,5 +218,7 @@ void registerPatient() {
     }
 
     patients[patientCount++] = p;
-    printf("\nPatient %s registered! Base Consultation Fee calculated: LKR %.2f\n", p.name, p.base_fee);
+    printf("\nPatient %s registered!", p.name);
+    printf("\n  Base Fee: LKR %.2f", p.base_fee);
+    printf("\n  Urgency Surcharge: LKR %.2f\n", p.surcharge);
 }
