@@ -59,6 +59,8 @@ void displayMenu();
 void registerPatient();
 float getSpecialtyBaseFee(int specialty_id);
 float calculateSurcharge(float base_fee, int urgency);
+float calculateWardCost(int ward_id, int days_admitted);
+float calculateDiscount(int age, float subtotal);
 
 int main() {
     int choice;
@@ -115,11 +117,31 @@ float getSpecialtyBaseFee(int specialty_id) {
 
 float calculateSurcharge(float base_fee, int urgency) {
     if (urgency == 2) {
-        return base_fee * 0.15f; // 15% surcharge for Urgent cases
+        return base_fee * 0.15f;
     } else if (urgency == 3) {
-        return base_fee * 0.35f; // 35% surcharge for Critical cases
+        return base_fee * 0.35f;
     }
-    return 0.0f; // 0% surcharge for Normal cases
+    return 0.0f;
+}
+
+float calculateWardCost(int ward_id, int days_admitted) {
+    if (ward_id == 0 || days_admitted <= 0) return 0.0f;
+
+    for (int i = 0; i < 4; i++) {
+        if (WARDS[i].id == ward_id) {
+            return WARDS[i].daily_rate * days_admitted;
+        }
+    }
+    return 0.0f;
+}
+
+float calculateDiscount(int age, float subtotal) {
+    if (age < 12) {
+        return subtotal * 0.15f; // 15% Child Discount
+    } else if (age >= 65) {
+        return subtotal * 0.20f; // 20% Senior Citizen Discount
+    }
+    return 0.0f;
 }
 
 void registerPatient() {
@@ -173,10 +195,6 @@ void registerPatient() {
         }
     } while (1);
 
-    // Dynamic fee and surcharge calculations
-    p.base_fee = getSpecialtyBaseFee(p.specialty_id);
-    p.surcharge = calculateSurcharge(p.base_fee, p.urgency);
-
     int isAdmitted;
     do {
         printf("\nIs admission required? (1: Yes, 0: No / Outpatient): ");
@@ -217,8 +235,26 @@ void registerPatient() {
         p.days_admitted = 0;
     }
 
+    // Complete billing engine calculation
+    p.base_fee = getSpecialtyBaseFee(p.specialty_id);
+    p.surcharge = calculateSurcharge(p.base_fee, p.urgency);
+    p.ward_cost = calculateWardCost(p.ward_id, p.days_admitted);
+    p.gross_total = p.base_fee + p.surcharge + p.ward_cost;
+    p.discount = calculateDiscount(p.age, p.base_fee + p.surcharge);
+    p.final_amount = p.gross_total - p.discount;
+
     patients[patientCount++] = p;
-    printf("\nPatient %s registered!", p.name);
-    printf("\n  Base Fee: LKR %.2f", p.base_fee);
-    printf("\n  Urgency Surcharge: LKR %.2f\n", p.surcharge);
+
+    printf("\n=========================================");
+    printf("\n         PATIENT REGISTRATION BILL       ");
+    printf("\n=========================================");
+    printf("\n  Patient Name:      %s", p.name);
+    printf("\n  Base Consultation: LKR %.2f", p.base_fee);
+    printf("\n  Urgency Surcharge: LKR %.2f", p.surcharge);
+    printf("\n  Ward Accommodation:LKR %.2f", p.ward_cost);
+    printf("\n  Gross Total:       LKR %.2f", p.gross_total);
+    printf("\n  Age Discount:     -LKR %.2f", p.discount);
+    printf("\n  ---------------------------------------");
+    printf("\n  FINAL AMOUNT DUE:  LKR %.2f", p.final_amount);
+    printf("\n=========================================\n");
 }
