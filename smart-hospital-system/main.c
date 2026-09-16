@@ -61,6 +61,7 @@ float getSpecialtyBaseFee(int specialty_id);
 float calculateSurcharge(float base_fee, int urgency);
 float calculateWardCost(int ward_id, int days_admitted);
 float calculateDiscount(int age, float subtotal);
+int calculateWaitTime(int specialty_id, int urgency);
 
 int main() {
     int choice;
@@ -137,11 +138,28 @@ float calculateWardCost(int ward_id, int days_admitted) {
 
 float calculateDiscount(int age, float subtotal) {
     if (age < 12) {
-        return subtotal * 0.15f; // 15% Child Discount
+        return subtotal * 0.15f;
     } else if (age >= 65) {
-        return subtotal * 0.20f; // 20% Senior Citizen Discount
+        return subtotal * 0.20f;
     }
     return 0.0f;
+}
+
+int calculateWaitTime(int specialty_id, int urgency) {
+    if (urgency == 3) return 0; // Immediate attention for critical cases
+
+    int avg_time = 15; // Fallback
+    for (int i = 0; i < 4; i++) {
+        if (SPECIALTIES[i].id == specialty_id) {
+            avg_time = SPECIALTIES[i].avg_time;
+            break;
+        }
+    }
+
+    if (urgency == 2) {
+        return (int)(avg_time * 0.5);
+    }
+    return (int)(avg_time * 1.5);
 }
 
 void registerPatient() {
@@ -235,13 +253,14 @@ void registerPatient() {
         p.days_admitted = 0;
     }
 
-    // Complete billing engine calculation
+    // Calculations
     p.base_fee = getSpecialtyBaseFee(p.specialty_id);
     p.surcharge = calculateSurcharge(p.base_fee, p.urgency);
     p.ward_cost = calculateWardCost(p.ward_id, p.days_admitted);
     p.gross_total = p.base_fee + p.surcharge + p.ward_cost;
     p.discount = calculateDiscount(p.age, p.base_fee + p.surcharge);
     p.final_amount = p.gross_total - p.discount;
+    p.wait_time = calculateWaitTime(p.specialty_id, p.urgency);
 
     patients[patientCount++] = p;
 
@@ -249,6 +268,8 @@ void registerPatient() {
     printf("\n         PATIENT REGISTRATION BILL       ");
     printf("\n=========================================");
     printf("\n  Patient Name:      %s", p.name);
+    printf("\n  Estimated Wait:    %d minutes", p.wait_time);
+    printf("\n  ---------------------------------------");
     printf("\n  Base Consultation: LKR %.2f", p.base_fee);
     printf("\n  Urgency Surcharge: LKR %.2f", p.surcharge);
     printf("\n  Ward Accommodation:LKR %.2f", p.ward_cost);
