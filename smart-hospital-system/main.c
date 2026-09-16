@@ -26,6 +26,7 @@ typedef struct {
     int urgency; // 1: Normal, 2: Urgent, 3: Critical
     int specialty_id;
     int ward_id; // 0 if outpatient
+    int bed_number; // 0 if outpatient
     int days_admitted;
 
     // Financial and billing details
@@ -55,6 +56,9 @@ const Ward WARDS[4] = {
 Patient patients[MAX_PATIENTS];
 int patientCount = 0;
 
+// Bed Occupancy Matrix: 4 Wards x Max 20 Beds (0: Empty, 1: Occupied)
+int bedOccupancy[4][20] = {0};
+
 void displayMenu();
 void registerPatient();
 float getSpecialtyBaseFee(int specialty_id);
@@ -62,6 +66,7 @@ float calculateSurcharge(float base_fee, int urgency);
 float calculateWardCost(int ward_id, int days_admitted);
 float calculateDiscount(int age, float subtotal);
 int calculateWaitTime(int specialty_id, int urgency);
+int allocateBed(int ward_id);
 
 int main() {
     int choice;
@@ -146,9 +151,9 @@ float calculateDiscount(int age, float subtotal) {
 }
 
 int calculateWaitTime(int specialty_id, int urgency) {
-    if (urgency == 3) return 0; // Immediate attention for critical cases
+    if (urgency == 3) return 0;
 
-    int avg_time = 15; // Fallback
+    int avg_time = 15;
     for (int i = 0; i < 4; i++) {
         if (SPECIALTIES[i].id == specialty_id) {
             avg_time = SPECIALTIES[i].avg_time;
@@ -160,6 +165,19 @@ int calculateWaitTime(int specialty_id, int urgency) {
         return (int)(avg_time * 0.5);
     }
     return (int)(avg_time * 1.5);
+}
+
+int allocateBed(int ward_id) {
+    int wardIdx = ward_id - 1;
+    int maxCapacity = WARDS[wardIdx].capacity;
+
+    for (int bed = 0; bed < maxCapacity; bed++) {
+        if (bedOccupancy[wardIdx][bed] == 0) {
+            bedOccupancy[wardIdx][bed] = 1; // Mark as occupied
+            return bed + 1; // Return 1-based bed number
+        }
+    }
+    return -1; // Ward full
 }
 
 void registerPatient() {
@@ -235,7 +253,12 @@ void registerPatient() {
                 while (getchar() != '\n');
                 printf("Invalid ward selection! Pick between 1 and 4.\n");
             } else {
-                break;
+                p.bed_number = allocateBed(p.ward_id);
+                if (p.bed_number == -1) {
+                    printf("Warning: Selected ward is at maximum capacity! Re-select or enter 0 for outpatient.\n");
+                } else {
+                    break;
+                }
             }
         } while (1);
 
@@ -250,10 +273,10 @@ void registerPatient() {
         } while (1);
     } else {
         p.ward_id = 0;
+        p.bed_number = 0;
         p.days_admitted = 0;
     }
 
-    // Calculations
     p.base_fee = getSpecialtyBaseFee(p.specialty_id);
     p.surcharge = calculateSurcharge(p.base_fee, p.urgency);
     p.ward_cost = calculateWardCost(p.ward_id, p.days_admitted);
@@ -269,6 +292,9 @@ void registerPatient() {
     printf("\n=========================================");
     printf("\n  Patient Name:      %s", p.name);
     printf("\n  Estimated Wait:    %d minutes", p.wait_time);
+    if (p.ward_id > 0) {
+        printf("\n  Assigned Bed:      Ward %d, Bed #%d", p.ward_id, p.bed_number);
+    }
     printf("\n  ---------------------------------------");
     printf("\n  Base Consultation: LKR %.2f", p.base_fee);
     printf("\n  Urgency Surcharge: LKR %.2f", p.surcharge);
