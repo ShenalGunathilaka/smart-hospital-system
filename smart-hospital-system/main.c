@@ -68,6 +68,7 @@ float calculateDiscount(int age, float subtotal);
 int calculateWaitTime(int specialty_id, int urgency);
 int allocateBed(int ward_id);
 void sortPatientsByTriage(Patient arr[], int n);
+void displayTriageList();
 
 int main() {
     int choice;
@@ -86,7 +87,7 @@ int main() {
                 registerPatient();
                 break;
             case 2:
-                printf("\n[Feature Pending] Display Triage Priority List\n");
+                displayTriageList();
                 break;
             case 3:
                 printf("\n[Feature Pending] Generate System Analytics\n");
@@ -184,7 +185,6 @@ int allocateBed(int ward_id) {
 void sortPatientsByTriage(Patient arr[], int n) {
     for (int i = 0; i < n - 1; i++) {
         for (int j = 0; j < n - i - 1; j++) {
-            // Sort in descending order of urgency (Critical [3] -> Urgent [2] -> Normal [1])
             if (arr[j].urgency < arr[j + 1].urgency) {
                 Patient temp = arr[j];
                 arr[j] = arr[j + 1];
@@ -192,6 +192,51 @@ void sortPatientsByTriage(Patient arr[], int n) {
             }
         }
     }
+}
+
+void displayTriageList() {
+    if (patientCount == 0) {
+        printf("\nNo patients registered in the system yet.\n");
+        return;
+    }
+
+    // Create a temporary copy to sort without mutating original registration order
+    Patient sortedPatients[MAX_PATIENTS];
+    for (int i = 0; i < patientCount; i++) {
+        sortedPatients[i] = patients[i];
+    }
+
+    sortPatientsByTriage(sortedPatients, patientCount);
+
+    printf("\n========================================================================================\n");
+    printf("                               TRIAGE PRIORITY QUEUE                                    \n");
+    printf("========================================================================================\n");
+    printf("%-5s | %-20s | %-5s | %-10s | %-20s | %-10s\n", "ID", "Name", "Age", "Urgency", "Specialty", "Wait Time");
+    printf("----------------------------------------------------------------------------------------\n");
+
+    for (int i = 0; i < patientCount; i++) {
+        char urgencyStr[15];
+        if (sortedPatients[i].urgency == 3) strcpy(urgencyStr, "CRITICAL");
+        else if (sortedPatients[i].urgency == 2) strcpy(urgencyStr, "URGENT");
+        else strcpy(urgencyStr, "NORMAL");
+
+        char specialtyStr[25];
+        for (int k = 0; k < 4; k++) {
+            if (SPECIALTIES[k].id == sortedPatients[i].specialty_id) {
+                strcpy(specialtyStr, SPECIALTIES[k].name);
+                break;
+            }
+        }
+
+        printf("%-5d | %-20s | %-5d | %-10s | %-20s | %d mins\n",
+               sortedPatients[i].id,
+               sortedPatients[i].name,
+               sortedPatients[i].age,
+               urgencyStr,
+               specialtyStr,
+               sortedPatients[i].wait_time);
+    }
+    printf("========================================================================================\n");
 }
 
 void registerPatient() {
