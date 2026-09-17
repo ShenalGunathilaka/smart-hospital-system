@@ -67,6 +67,7 @@ float calculateWardCost(int ward_id, int days_admitted);
 float calculateDiscount(int age, float subtotal);
 int calculateWaitTime(int specialty_id, int urgency);
 int allocateBed(int ward_id);
+void sortPatientsByTriage(Patient arr[], int n);
 
 int main() {
     int choice;
@@ -173,11 +174,24 @@ int allocateBed(int ward_id) {
 
     for (int bed = 0; bed < maxCapacity; bed++) {
         if (bedOccupancy[wardIdx][bed] == 0) {
-            bedOccupancy[wardIdx][bed] = 1; // Mark as occupied
-            return bed + 1; // Return 1-based bed number
+            bedOccupancy[wardIdx][bed] = 1;
+            return bed + 1;
         }
     }
-    return -1; // Ward full
+    return -1;
+}
+
+void sortPatientsByTriage(Patient arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            // Sort in descending order of urgency (Critical [3] -> Urgent [2] -> Normal [1])
+            if (arr[j].urgency < arr[j + 1].urgency) {
+                Patient temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
 }
 
 void registerPatient() {
