@@ -69,6 +69,7 @@ int calculateWaitTime(int specialty_id, int urgency);
 int allocateBed(int ward_id);
 void sortPatientsByTriage(Patient arr[], int n);
 void displayTriageList();
+void calculateFinancialTotals(float *totalGross, float *totalDiscounts, float *totalNet, float *totalSurcharges);
 
 int main() {
     int choice;
@@ -191,6 +192,20 @@ void sortPatientsByTriage(Patient arr[], int n) {
                 arr[j + 1] = temp;
             }
         }
+    }
+}
+
+void calculateFinancialTotals(float *totalGross, float *totalDiscounts, float *totalNet, float *totalSurcharges) {
+    *totalGross = 0.0f;
+    *totalDiscounts = 0.0f;
+    *totalNet = 0.0f;
+    *totalSurcharges = 0.0f;
+
+    for (int i = 0; i < patientCount; i++) {
+        *totalGross += patients[i].gross_total;
+        *totalDiscounts += patients[i].discount;
+        *totalNet += patients[i].final_amount;
+        *totalSurcharges += patients[i].surcharge;
     }
 }
 
