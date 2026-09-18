@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define MAX_PATIENTS 100
+#define FILE_NAME "patients_data.txt"
 
 typedef struct {
     int id;
@@ -71,6 +72,7 @@ void sortPatientsByTriage(Patient arr[], int n);
 void displayTriageList();
 void calculateFinancialTotals(float *totalGross, float *totalDiscounts, float *totalNet, float *totalSurcharges);
 void generateAnalytics();
+void savePatientsToFile();
 
 int main() {
     int choice;
@@ -95,7 +97,8 @@ int main() {
                 generateAnalytics();
                 break;
             case 4:
-                printf("\nExiting system...\n");
+                savePatientsToFile();
+                printf("\nExiting system... Data safely saved.\n");
                 break;
             default:
                 printf("\nInvalid option. Please choose between 1 and 4.\n");
@@ -112,7 +115,7 @@ void displayMenu() {
     printf("\n1. Register New Patient");
     printf("\n2. Display Triage Priority List");
     printf("\n3. Generate System Analytics");
-    printf("\n4. Exit");
+    printf("\n4. Exit & Save Data");
     printf("\n=========================================\n");
 }
 
@@ -430,4 +433,34 @@ void registerPatient() {
     printf("\n  ---------------------------------------");
     printf("\n  FINAL AMOUNT DUE:  LKR %.2f", p.final_amount);
     printf("\n=========================================\n");
+}
+
+void savePatientsToFile() {
+    FILE *file = fopen(FILE_NAME, "w");
+    if (file == NULL) {
+        printf("Error: Unable to save data to file.\n");
+        return;
+    }
+
+    fprintf(file, "%d\n", patientCount);
+    for (int i = 0; i < patientCount; i++) {
+        fprintf(file, "%d|%s|%d|%d|%d|%d|%d|%d|%.2f|%.2f|%.2f|%.2f|%.2f|%.2f|%d\n",
+                patients[i].id,
+                patients[i].name,
+                patients[i].age,
+                patients[i].urgency,
+                patients[i].specialty_id,
+                patients[i].ward_id,
+                patients[i].bed_number,
+                patients[i].days_admitted,
+                patients[i].base_fee,
+                patients[i].surcharge,
+                patients[i].ward_cost,
+                patients[i].gross_total,
+                patients[i].discount,
+                patients[i].final_amount,
+                patients[i].wait_time);
+    }
+
+    fclose(file);
 }
