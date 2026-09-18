@@ -73,8 +73,11 @@ void displayTriageList();
 void calculateFinancialTotals(float *totalGross, float *totalDiscounts, float *totalNet, float *totalSurcharges);
 void generateAnalytics();
 void savePatientsToFile();
+void loadPatientsFromFile();
 
 int main() {
+    loadPatientsFromFile();
+
     int choice;
 
     do {
@@ -463,4 +466,49 @@ void savePatientsToFile() {
     }
 
     fclose(file);
+}
+
+void loadPatientsFromFile() {
+    FILE *file = fopen(FILE_NAME, "r");
+    if (file == NULL) {
+        printf("\n[System Notice] No prior records found. Initializing new session.\n");
+        return;
+    }
+
+    if (fscanf(file, "%d\n", &patientCount) != 1) {
+        patientCount = 0;
+        fclose(file);
+        return;
+    }
+
+    for (int i = 0; i < patientCount; i++) {
+        fscanf(file, "%d|%49[^|]|%d|%d|%d|%d|%d|%d|%f|%f|%f|%f|%f|%f|%d\n",
+               &patients[i].id,
+               patients[i].name,
+               &patients[i].age,
+               &patients[i].urgency,
+               &patients[i].specialty_id,
+               &patients[i].ward_id,
+               &patients[i].bed_number,
+               &patients[i].days_admitted,
+               &patients[i].base_fee,
+               &patients[i].surcharge,
+               &patients[i].ward_cost,
+               &patients[i].gross_total,
+               &patients[i].discount,
+               &patients[i].final_amount,
+               &patients[i].wait_time);
+
+        // Re-occupy ward bed matrix for loaded inpatients
+        if (patients[i].ward_id > 0 && patients[i].bed_number > 0) {
+            int wIdx = patients[i].ward_id - 1;
+            int bIdx = patients[i].bed_number - 1;
+            if (wIdx >= 0 && wIdx < 4 && bIdx >= 0 && bIdx < WARDS[wIdx].capacity) {
+                bedOccupancy[wIdx][bIdx] = 1;
+            }
+        }
+    }
+
+    fclose(file);
+    printf("\n[System Notice] Loaded %d patient record(s) successfully.\n", patientCount);
 }
