@@ -70,6 +70,7 @@ int allocateBed(int ward_id);
 void sortPatientsByTriage(Patient arr[], int n);
 void displayTriageList();
 void calculateFinancialTotals(float *totalGross, float *totalDiscounts, float *totalNet, float *totalSurcharges);
+void generateAnalytics();
 
 int main() {
     int choice;
@@ -91,7 +92,7 @@ int main() {
                 displayTriageList();
                 break;
             case 3:
-                printf("\n[Feature Pending] Generate System Analytics\n");
+                generateAnalytics();
                 break;
             case 4:
                 printf("\nExiting system...\n");
@@ -209,13 +210,64 @@ void calculateFinancialTotals(float *totalGross, float *totalDiscounts, float *t
     }
 }
 
+void generateAnalytics() {
+    if (patientCount == 0) {
+        printf("\nNo operational data available. Register patients first.\n");
+        return;
+    }
+
+    float totalGross, totalDiscounts, totalNet, totalSurcharges;
+    calculateFinancialTotals(&totalGross, &totalDiscounts, &totalNet, &totalSurcharges);
+
+    int normalCount = 0, urgentCount = 0, criticalCount = 0;
+    int inpatientCount = 0;
+
+    for (int i = 0; i < patientCount; i++) {
+        if (patients[i].urgency == 1) normalCount++;
+        else if (patients[i].urgency == 2) urgentCount++;
+        else if (patients[i].urgency == 3) criticalCount++;
+
+        if (patients[i].ward_id > 0) inpatientCount++;
+    }
+
+    printf("\n=========================================================\n");
+    printf("              SYSTEM OPERATIONAL & FINANCIAL ANALYTICS   \n");
+    printf("=========================================================\n");
+    printf(" Total Registered Patients:  %d\n", patientCount);
+    printf(" Inpatient Admissions:       %d\n", inpatientCount);
+    printf(" Outpatients (OPD):          %d\n", patientCount - inpatientCount);
+    printf(" ---------------------------------------------------------\n");
+    printf(" Urgency Breakdown:\n");
+    printf("   - Critical Priority:      %d\n", criticalCount);
+    printf("   - Urgent Priority:        %d\n", urgentCount);
+    printf("   - Normal Priority:        %d\n", normalCount);
+    printf(" ---------------------------------------------------------\n");
+    printf(" Ward Capacity Utilization:\n");
+
+    for (int w = 0; w < 4; w++) {
+        int occupied = 0;
+        for (int b = 0; b < WARDS[w].capacity; b++) {
+            if (bedOccupancy[w][b] == 1) occupied++;
+        }
+        float occupancyRate = ((float)occupied / WARDS[w].capacity) * 100.0f;
+        printf("   - %-25s: %d/%d beds (%.1f%%)\n", WARDS[w].name, occupied, WARDS[w].capacity, occupancyRate);
+    }
+
+    printf(" ---------------------------------------------------------\n");
+    printf(" Financial Revenue Summary:\n");
+    printf("   - Total Gross Revenue:    LKR %.2f\n", totalGross);
+    printf("   - Total Surcharges:       LKR %.2f\n", totalSurcharges);
+    printf("   - Total Discounts Issued: LKR %.2f\n", totalDiscounts);
+    printf("   - NET REVENUE COLLECTED:  LKR %.2f\n", totalNet);
+    printf("=========================================================\n");
+}
+
 void displayTriageList() {
     if (patientCount == 0) {
         printf("\nNo patients registered in the system yet.\n");
         return;
     }
 
-    // Create a temporary copy to sort without mutating original registration order
     Patient sortedPatients[MAX_PATIENTS];
     for (int i = 0; i < patientCount; i++) {
         sortedPatients[i] = patients[i];
