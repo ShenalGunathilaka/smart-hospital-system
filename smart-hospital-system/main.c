@@ -74,6 +74,7 @@ void calculateFinancialTotals(float *totalGross, float *totalDiscounts, float *t
 void generateAnalytics();
 void savePatientsToFile();
 void loadPatientsFromFile();
+void clearInputBuffer();
 
 int main() {
     loadPatientsFromFile();
@@ -84,8 +85,8 @@ int main() {
         displayMenu();
         printf("Enter Choice: ");
         if (scanf("%d", &choice) != 1) {
-            while (getchar() != '\n');
-            printf("\nInvalid input. Please enter a number.\n");
+            clearInputBuffer();
+            printf("\nInvalid input. Please enter a valid menu number.\n");
             continue;
         }
 
@@ -101,14 +102,19 @@ int main() {
                 break;
             case 4:
                 savePatientsToFile();
-                printf("\nExiting system... Data safely saved.\n");
+                printf("\nExiting system... Data safely saved to %s.\n", FILE_NAME);
                 break;
             default:
-                printf("\nInvalid option. Please choose between 1 and 4.\n");
+                printf("\nInvalid option. Please choose a number between 1 and 4.\n");
         }
     } while (choice != 4);
 
     return 0;
+}
+
+void clearInputBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
 }
 
 void displayMenu() {
@@ -324,14 +330,20 @@ void registerPatient() {
     printf("\n--- Patient Registration (ID: %d) ---\n", p.id);
 
     printf("Enter Patient Full Name: ");
-    getchar();
-    fgets(p.name, sizeof(p.name), stdin);
-    p.name[strcspn(p.name, "\n")] = 0;
+    clearInputBuffer();
+    if (fgets(p.name, sizeof(p.name), stdin) != NULL) {
+        size_t len = strlen(p.name);
+        if (len > 0 && p.name[len - 1] == '\n') {
+            p.name[len - 1] = '\0';
+        } else {
+            clearInputBuffer();
+        }
+    }
 
     do {
         printf("Enter Age (0 - 120): ");
         if (scanf("%d", &p.age) != 1 || p.age < 0 || p.age > 120) {
-            while (getchar() != '\n');
+            clearInputBuffer();
             printf("Invalid age! Please enter a value between 0 and 120.\n");
         } else {
             break;
@@ -342,7 +354,7 @@ void registerPatient() {
         printf("\nSelect Urgency Level:\n");
         printf(" 1. Normal (0%% surcharge)\n 2. Urgent (15%% surcharge)\n 3. Critical (35%% surcharge)\nChoice (1-3): ");
         if (scanf("%d", &p.urgency) != 1 || p.urgency < 1 || p.urgency > 3) {
-            while (getchar() != '\n');
+            clearInputBuffer();
             printf("Invalid selection! Please enter 1, 2, or 3.\n");
         } else {
             break;
@@ -356,7 +368,7 @@ void registerPatient() {
         }
         printf("Choice (1-4): ");
         if (scanf("%d", &p.specialty_id) != 1 || p.specialty_id < 1 || p.specialty_id > 4) {
-            while (getchar() != '\n');
+            clearInputBuffer();
             printf("Invalid specialty choice! Pick between 1 and 4.\n");
         } else {
             break;
@@ -367,7 +379,7 @@ void registerPatient() {
     do {
         printf("\nIs admission required? (1: Yes, 0: No / Outpatient): ");
         if (scanf("%d", &isAdmitted) != 1 || (isAdmitted != 0 && isAdmitted != 1)) {
-            while (getchar() != '\n');
+            clearInputBuffer();
             printf("Invalid option! Enter 1 for Yes or 0 for No.\n");
         } else {
             break;
@@ -382,7 +394,7 @@ void registerPatient() {
             }
             printf("Choice (1-4): ");
             if (scanf("%d", &p.ward_id) != 1 || p.ward_id < 1 || p.ward_id > 4) {
-                while (getchar() != '\n');
+                clearInputBuffer();
                 printf("Invalid ward selection! Pick between 1 and 4.\n");
             } else {
                 p.bed_number = allocateBed(p.ward_id);
@@ -397,7 +409,7 @@ void registerPatient() {
         do {
             printf("Enter anticipated days of stay (1 - 365): ");
             if (scanf("%d", &p.days_admitted) != 1 || p.days_admitted < 1 || p.days_admitted > 365) {
-                while (getchar() != '\n');
+                clearInputBuffer();
                 printf("Invalid duration! Please enter a number between 1 and 365.\n");
             } else {
                 break;
@@ -499,7 +511,6 @@ void loadPatientsFromFile() {
                &patients[i].final_amount,
                &patients[i].wait_time);
 
-        // Re-occupy ward bed matrix for loaded inpatients
         if (patients[i].ward_id > 0 && patients[i].bed_number > 0) {
             int wIdx = patients[i].ward_id - 1;
             int bIdx = patients[i].bed_number - 1;
